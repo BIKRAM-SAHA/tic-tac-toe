@@ -1,4 +1,16 @@
 .square {
   border: 2px solid #000;
+}
+.square-btn {
+  height: 100%;
+  width: 100%;
   font-size: 3rem;
+}
+.prediction {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  color: maroon;
+  opacity: 0.5;
 }

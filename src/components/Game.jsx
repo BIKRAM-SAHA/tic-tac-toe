@@ -1,35 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/Game.css";
+import { calculateWin } from "../helpers/calculateWin";
+import { minimax } from "../helpers/minimax";
 import Board from "./Board";
-
-const lines = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-];
-
-const calculateWin = (currSquares) => {
-  for (const [a, b, c] of lines) {
-    if (
-      currSquares[a] &&
-      currSquares[a] === currSquares[b] &&
-      currSquares[a] === currSquares[c]
-    ) {
-      return currSquares[a];
-    }
-  }
-  return null;
-};
 
 function Game() {
   const [nextPlayer, setNextPlayer] = useState("X");
   const [history, setHistory] = useState([{ squares: Array(9).fill(null) }]);
   const [stepNumber, setStepNumber] = useState(0);
+  const [enableBestMove, setEnableBestMove] = useState(false);
+  const [bestMove, setBestMove] = useState(null);
 
   const boardState = history[stepNumber].squares;
   const winner = calculateWin(boardState);
@@ -44,7 +24,7 @@ function Game() {
     setHistory(
       history.slice(0, stepNumber + 1).concat({ squares: newBoardState })
     );
-    setNextPlayer(nextPlayer === "X" ? "O" : "X");
+    setNextPlayer((nextPlayer) => (nextPlayer === "X" ? "O" : "X"));
     setStepNumber((prev) => prev + 1);
   };
 
@@ -60,13 +40,46 @@ function Game() {
     setHistory([{ squares: Array(9).fill(null) }]);
   };
 
+  const toggleBestMove = () => {
+    setEnableBestMove((prev) => !prev);
+  };
+  useEffect(() => {
+    if (!enableBestMove) {
+      setBestMove(null);
+    } else {
+      const val = minimax(history[stepNumber].squares);
+      if (val[1]) {
+        setBestMove(val);
+      } else {
+        setBestMove(null);
+      }
+    }
+  }, [history, stepNumber, enableBestMove]);
+
   return (
     <div className="game">
       <h1 className="game-status">
-        {winner ? `Winner is ${winner}` : `Next Player: ${nextPlayer}`}
+        {winner
+          ? winner === "Draw"
+            ? "It is a Draw"
+            : `Winner is ${winner}`
+          : `Next Player: ${nextPlayer}`}
       </h1>
       <button onClick={reset}>Reset</button>
-      <Board boardState={boardState} onSquareClicked={onSquareClicked} />
+      <div>
+        <input
+          type="checkbox"
+          checked={enableBestMove}
+          onChange={toggleBestMove}
+          id="bestMove"
+        />
+        <label htmlFor="bestMove">Show Best Move</label>
+      </div>
+      <Board
+        boardState={boardState}
+        onSquareClicked={onSquareClicked}
+        bestMove={bestMove}
+      />
       <ul className="history">
         {history.map((step, move) => {
           const description = move ? `Go to move ${move}` : "Go to Game Start";
